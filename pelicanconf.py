@@ -53,9 +53,12 @@ JINJA_ENVIRONMENT = {'extensions': ['jinja2.ext.i18n']}
 # BOOTSTRAP_THEME = 'flatly'
 BOOTSTRAP_THEME = 'yeti'
 PYGMENTS_STYLE = 'autumn'
-# CUSTOM_CSS = r'static\custom.css'
-# STATIC_PATHS = ['images', r'extra\custom.css']
-# EXTRA_PATH_METADATA = {r'extra\custom.css': {'path': r'static\custom.css'}}
+CUSTOM_CSS = 'static/css/custom.css'
+STATIC_PATHS = [
+    'images',
+    'extra',
+]
+EXTRA_PATH_METADATA = {'extra/custom.css': {'path': 'static/css/custom.css'}}
 HIDE_SIDEBAR = True
 PADDED_SINGLE_COLUMN_STYLE = True
 DISPLAY_CATEGORIES_ON_MENU = False
