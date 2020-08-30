@@ -47,7 +47,7 @@ JINJA_ENVIRONMENT = {'extensions': ['jinja2.ext.i18n']}
 
 # BOOTSTRAP_THEME = 'flatly'
 BOOTSTRAP_THEME = 'yeti'
-PYGMENTS_STYLE = 'emacs'
+PYGMENTS_STYLE = 'autumn'
 # CUSTOM_CSS = r'static\custom.css'
 # STATIC_PATHS = ['images', r'extra\custom.css']
 # EXTRA_PATH_METADATA = {r'extra\custom.css': {'path': r'static\custom.css'}}
