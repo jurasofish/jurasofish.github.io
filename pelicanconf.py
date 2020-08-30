@@ -62,3 +62,4 @@ EXTRA_PATH_METADATA = {'extra/custom.css': {'path': 'static/css/custom.css'}}
 HIDE_SIDEBAR = True
 PADDED_SINGLE_COLUMN_STYLE = True
 DISPLAY_CATEGORIES_ON_MENU = False
+RELATIVE_URLS = True
