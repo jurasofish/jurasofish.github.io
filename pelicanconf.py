@@ -3,7 +3,7 @@
 
 AUTHOR = 'Michael Jurasovic'
 SITENAME = 'Michael Jurasovic'
-SITEURL = 'jurasofish.github.io'
+SITEURL = 'https://jurasofish.github.io'
 
 PATH = 'content'
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Michael Jurasovic</title><link href="jurasofish.github.io/" rel="alternate"></link><link href="jurasofish.github.io/feeds/all.atom.xml" rel="self"></link><id>jurasofish.github.io/</id><updated>2010-12-03T10:20:00+11:00</updated><entry><title>Automatic Differentiation for Power System Analysis</title><link href="jurasofish.github.io/automatic-differentiation-for-power-system-analysis.html" rel="alternate"></link><published>2010-12-03T10:20:00+11:00</published><updated>2010-12-03T10:20:00+11:00</updated><author><name>Michael Jurasovic</name></author><id>tag:None,2010-12-03:jurasofish.github.io/automatic-differentiation-for-power-system-analysis.html</id><summary type="html">&lt;p&gt;&lt;em&gt;This notebook calculates marginal loss factors of a power system using automatic differentiation.&lt;/em&gt;&lt;/p&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Michael Jurasovic</title><link href="https://jurasofish.github.io/" rel="alternate"></link><link href="https://jurasofish.github.io/feeds/all.atom.xml" rel="self"></link><id>https://jurasofish.github.io/</id><updated>2010-12-03T10:20:00+11:00</updated><entry><title>Automatic Differentiation for Power System Analysis</title><link href="https://jurasofish.github.io/automatic-differentiation-for-power-system-analysis.html" rel="alternate"></link><published>2010-12-03T10:20:00+11:00</published><updated>2010-12-03T10:20:00+11:00</updated><author><name>Michael Jurasovic</name></author><id>tag:jurasofish.github.io,2010-12-03:/automatic-differentiation-for-power-system-analysis.html</id><summary type="html">&lt;p&gt;&lt;em&gt;This notebook calculates marginal loss factors of a power system using automatic differentiation.&lt;/em&gt;&lt;/p&gt;
 &lt;p&gt;The marginal loss factor (MLF) at a connection node is defined as the rate of change of system generation at the reference node with respect to the change in load at the connection node. The reference node …&lt;/p&gt;</summary><content type="html">&lt;p&gt;&lt;em&gt;This notebook calculates marginal loss factors of a power system using automatic differentiation.&lt;/em&gt;&lt;/p&gt;
 &lt;p&gt;The marginal loss factor (MLF) at a connection node is defined as the rate of change of system generation at the reference node with respect to the change in load at the connection node. The reference node is defined arbitrarily.
 That is, an MLF of &amp;gt;1 indicates that system losses as a ratio of total system load increase when load is added at that node.&lt;/p&gt;
@@ -250,7 +250,7 @@ e.g. &lt;code&gt;x = np.array([...]); x[1] = 2&lt;/code&gt; is not permitted, as
     (document.body || document.getElementsByTagName('head')[0]).appendChild(configscript);
     (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
 }
-&lt;/script&gt;</content><category term="misc"></category></entry><entry><title>Multilateration in 2D: IoT/LoRaWAN Mass Surveillance</title><link href="jurasofish.github.io/multilateration-in-2d-iotlorawan-mass-surveillance.html" rel="alternate"></link><published>2010-12-03T10:20:00+11:00</published><updated>2010-12-03T10:20:00+11:00</updated><author><name>Michael Jurasovic</name></author><id>tag:None,2010-12-03:jurasofish.github.io/multilateration-in-2d-iotlorawan-mass-surveillance.html</id><summary type="html">&lt;p&gt;"&lt;em&gt;Multilateration (MLAT) is a surveillance technique based on the measurement of the difference in distance to two stations at known locations by broadcast signals at known times.&lt;/em&gt;" - &lt;a href="http://en.wikipedia.org/wiki/Multilateration"&gt;en.wikipedia.org/wiki/Multilateration&lt;/a&gt;&lt;/p&gt;
+&lt;/script&gt;</content><category term="misc"></category></entry><entry><title>Multilateration in 2D: IoT/LoRaWAN Mass Surveillance</title><link href="https://jurasofish.github.io/multilateration-in-2d-iotlorawan-mass-surveillance.html" rel="alternate"></link><published>2010-12-03T10:20:00+11:00</published><updated>2010-12-03T10:20:00+11:00</updated><author><name>Michael Jurasovic</name></author><id>tag:jurasofish.github.io,2010-12-03:/multilateration-in-2d-iotlorawan-mass-surveillance.html</id><summary type="html">&lt;p&gt;"&lt;em&gt;Multilateration (MLAT) is a surveillance technique based on the measurement of the difference in distance to two stations at known locations by broadcast signals at known times.&lt;/em&gt;" - &lt;a href="http://en.wikipedia.org/wiki/Multilateration"&gt;en.wikipedia.org/wiki/Multilateration&lt;/a&gt;&lt;/p&gt;
 &lt;h2&gt;Abstract&lt;/h2&gt;
 &lt;p&gt;A single motivated individual with several hundred USD and a hobbyist level of competency in electronics and …&lt;/p&gt;</summary><content type="html">&lt;p&gt;"&lt;em&gt;Multilateration (MLAT) is a surveillance technique based on the measurement of the difference in distance to two stations at known locations by broadcast signals at known times.&lt;/em&gt;" - &lt;a href="http://en.wikipedia.org/wiki/Multilateration"&gt;en.wikipedia.org/wiki/Multilateration&lt;/a&gt;&lt;/p&gt;
 &lt;h2&gt;Abstract&lt;/h2&gt;
@@ -259,15 +259,15 @@ e.g. &lt;code&gt;x = np.array([...]); x[1] = 2&lt;/code&gt; is not permitted, as
 &lt;p&gt;When a signal is transmitted by a radio device it propagates through the atmosphere at approximately the speed of light - that is, approximately &lt;span class="math"&gt;\(v = 3 \text{e} 8ms^{-1}\)&lt;/span&gt;. &lt;/p&gt;
 &lt;p&gt;If this signal is received by two receivers (towers), the time difference of arrival (&lt;span class="math"&gt;\(\text{TDOA}\)&lt;/span&gt;) between the first and second tower can be determined. &lt;span class="math"&gt;\(\text{TDOA} = t_1 - t_0\)&lt;/span&gt; where &lt;span class="math"&gt;\(t_0\)&lt;/span&gt; is the time the signal is received first and &lt;span class="math"&gt;\(t_1\)&lt;/span&gt; is the time the signal is received second. The towers require synchronized high accuracy clocks, which can be achieved in practice with a GPS clock on each tower.&lt;/p&gt;
 &lt;p&gt;The below animation shows a signal propagating from a transmitter "Tx" and being received by two towers at different times, allowing the &lt;span class="math"&gt;\(\text{TDOA}\)&lt;/span&gt; to be calculated.&lt;/p&gt;
-&lt;p align="center"&gt;&lt;img src="jurasofish.github.io/multilateration/animations/tdoa.gif"&gt;&lt;/p&gt;
+&lt;p align="center"&gt;&lt;img src="https://jurasofish.github.io/multilateration/animations/tdoa.gif"&gt;&lt;/p&gt;
 
 &lt;p&gt;This &lt;span class="math"&gt;\(\text{TDOA}\)&lt;/span&gt; can be used to determine the &lt;em&gt;difference&lt;/em&gt; in distance that the transmitter is located from the towers. For example, assume that the transmitter is on a circle of radius &lt;span class="math"&gt;\(d\)&lt;/span&gt; metres from tower 1, where the signal was received first. Then it must also be on a circle of radius &lt;span class="math"&gt;\(d+v \times \text{TDOA}\)&lt;/span&gt; metres from tower 0, where the signal was received second. The device must then lie at the intersection of the two circles, giving two possible locations (or one if the circles only touch, or none if the circles do not touch).&lt;/p&gt;
 &lt;p&gt;By iterating over a range of values for &lt;span class="math"&gt;\(d\)&lt;/span&gt; and at each iteration finding the intersection of the two circles, a locus of possible transmitter locations can be determined. This produces a hyperbolic curve on which the transmitter lies. Notably, it is not required to know &lt;em&gt;when&lt;/em&gt; the signal was first transmitted - as you would with trilateration - and so no communication with the transmitter is required beyond simply identifying the signal.&lt;/p&gt;
 &lt;p&gt;The below animation shows circles of increasing radius around the two towers and the resulting hyperbolic locus of intersections as &lt;span class="math"&gt;\(d\)&lt;/span&gt; is increased. The circle around tower 1 has a radius of &lt;span class="math"&gt;\(r_1=d\)&lt;/span&gt;, and the circle around tower 0 has a radius of &lt;span class="math"&gt;\(r_0=d+\text{TDOA} \times v\)&lt;/span&gt; (noting &lt;span class="math"&gt;\(\text{TDOA} \times v\)&lt;/span&gt; is constant and &lt;span class="math"&gt;\(\text{TDOA}\)&lt;/span&gt; comes from the previous animation). &lt;/p&gt;
-&lt;p align="center"&gt;&lt;img src="jurasofish.github.io/multilateration/animations/locus.gif"&gt;&lt;/p&gt;
+&lt;p align="center"&gt;&lt;img src="https://jurasofish.github.io/multilateration/animations/locus.gif"&gt;&lt;/p&gt;
 
 &lt;p&gt;With &lt;span class="math"&gt;\(n\)&lt;/span&gt; towers, this process can be repeated between the tower that first received the message and every other tower to produce &lt;span class="math"&gt;\(n-1\)&lt;/span&gt; loci. In general, with three towers the device location can be narrowed down to at least two positions and with four towers to exactly one position. There are some cases, depending on the relative geometry of the towers and transmitter and the error in the timestamping, where this is not the case.&lt;/p&gt;
-&lt;p align="center"&gt;&lt;img src="jurasofish.github.io/multilateration/animations/loci.gif"&gt;&lt;/p&gt;
+&lt;p align="center"&gt;&lt;img src="https://jurasofish.github.io/multilateration/animations/loci.gif"&gt;&lt;/p&gt;
 
 &lt;p&gt;The accuracy of the determined location will depend on the accuracy of the timestamping, the effects of diffraction and obstacles on path length, the relative geometry of the transmitter and towers, etc. The approximation of the problem to two dimensions will also introduce error.&lt;/p&gt;
 &lt;h2&gt;Analysis&lt;/h2&gt;
@@ -440,7 +440,7 @@ $$&lt;/div&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;&lt;img alt="png" src="jurasofish.github.io/multilateration/output_3_1.png"&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img alt="png" src="https://jurasofish.github.io/multilateration/output_3_1.png"&gt;&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# plot the same hyperbola using the derived expressions.&lt;/span&gt;
 
 &lt;span class="n"&gt;fig&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;ax&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;plt&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;subplots&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;figsize&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
@@ -474,7 +474,7 @@ $$&lt;/div&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;&lt;img alt="png" src="jurasofish.github.io/multilateration/output_4_0.png"&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img alt="png" src="https://jurasofish.github.io/multilateration/output_4_0.png"&gt;&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# Solve the location of the transmitter.&lt;/span&gt;
 
 &lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;np&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;argmin&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;rec_times&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
@@ -529,7 +529,7 @@ $$&lt;/div&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;&lt;img alt="png" src="jurasofish.github.io/multilateration/output_5_1.png"&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img alt="png" src="https://jurasofish.github.io/multilateration/output_5_1.png"&gt;&lt;/p&gt;
 &lt;h2&gt;Animations&lt;/h2&gt;
 &lt;p&gt;Below cells generate the animations used above. Some variable re-use.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;matplotlib.pyplot&lt;/span&gt; &lt;span class="k"&gt;as&lt;/span&gt; &lt;span class="nn"&gt;plt&lt;/span&gt;
