@@ -82,8 +82,6 @@
             <div class="entry-content">
                 <div class="panel">
                     <time datetime="{{ article.date.isoformat() }}"> {{ article.locale_date }}</time>
-                    by
-                    <a href="{{ SITEURL }}/{{ article.author.url }}"> {{ article.author }}</a>
                     <br><br>
                 </div>
                 {{ article.content }}
