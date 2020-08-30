@@ -30,7 +30,7 @@ SOCIAL = (
 )
 
 MENUITEMS = (
-('Github', 'https://github.com/jurasofish'),
+    ('GitHub', 'https://github.com/jurasofish'),
 )
 
 DEFAULT_PAGINATION = False
