@@ -35,8 +35,13 @@ OUTPUT_PATH = 'docs/'
 # Uncomment following line if you want document-relative URLs when developing
 #RELATIVE_URLS = True
 
-'''
+PLUGIN_PATHS = ["plugins"]
 PLUGINS = [
     'pelican.plugins.render_math',
+    'i18n_subsites',
 ]
-'''
+
+
+THEME = 'themes/pelican-bootstrap3'
+
+JINJA_ENVIRONMENT = {'extensions': ['jinja2.ext.i18n']}
