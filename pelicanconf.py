@@ -3,7 +3,7 @@
 
 AUTHOR = 'Michael Jurasovic'
 SITENAME = 'Michael Jurasovic'
-SITEURL = ''
+SITEURL = 'jurasofish.github.io'
 
 PATH = 'content'
 
@@ -12,7 +12,7 @@ TIMEZONE = 'Australia/Melbourne'
 DEFAULT_LANG = 'English'
 
 # Feed generation is usually not desired when developing
-FEED_ALL_ATOM = None
+FEED_ALL_ATOM = 'feeds/all.atom.xml'
 CATEGORY_FEED_ATOM = None
 TRANSLATION_FEED_ATOM = None
 AUTHOR_FEED_ATOM = None
