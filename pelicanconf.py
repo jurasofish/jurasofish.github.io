@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*- #
 
 AUTHOR = 'Michael Jurasovic'
-SITENAME = 'jurasofish.github.io'
+SITENAME = 'Michael Jurasovic'
 SITEURL = ''
 
 PATH = 'content'
@@ -27,6 +27,10 @@ LINKS = (
 # Social widget
 SOCIAL = (
     ('Github', 'https://github.com/jurasofish'),
+)
+
+MENUITEMS = (
+('Github', 'https://github.com/jurasofish'),
 )
 
 DEFAULT_PAGINATION = False
@@ -54,3 +58,4 @@ PYGMENTS_STYLE = 'autumn'
 # EXTRA_PATH_METADATA = {r'extra\custom.css': {'path': r'static\custom.css'}}
 HIDE_SIDEBAR = True
 PADDED_SINGLE_COLUMN_STYLE = True
+DISPLAY_CATEGORIES_ON_MENU = False
