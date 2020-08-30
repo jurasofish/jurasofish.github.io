@@ -53,3 +53,4 @@ PYGMENTS_STYLE = 'autumn'
 # STATIC_PATHS = ['images', r'extra\custom.css']
 # EXTRA_PATH_METADATA = {r'extra\custom.css': {'path': r'static\custom.css'}}
 HIDE_SIDEBAR = True
+PADDED_SINGLE_COLUMN_STYLE = True
