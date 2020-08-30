@@ -1,5 +1,5 @@
 Title: Automatic Differentiation for Power System Analysis
-Date: 2010-12-03 10:20
+Date: 2020-07-15 12:21
 
 *This notebook calculates marginal loss factors of a power system using automatic differentiation.*
 

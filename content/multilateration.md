@@ -1,5 +1,5 @@
 Title: Multilateration in 2D: IoT/LoRaWAN Mass Surveillance
-Date: 2010-12-03 10:20
+Date: 2019-06-23 12:17
 
 "*Multilateration (MLAT) is a surveillance technique based on the measurement of the difference in distance to two stations at known locations by broadcast signals at known times.*" - [en.wikipedia.org/wiki/Multilateration](http://en.wikipedia.org/wiki/Multilateration)
 
