@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="english" prefix="og: http://ogp.me/ns# fb: https://www.facebook.com/2008/fbml">
+<head>
+    <title>Multilateration in 2D: IoT/LoRaWAN Mass Surveillance - Michael Jurasovic</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<link rel="canonical" href="./multilateration-in-2d-iotlorawan-mass-surveillance.html">
+
+        <meta name="author" content="Michael Jurasovic" />
+        <meta name="description" content="&#34;Multilateration (MLAT) is a surveillance technique based on the measurement of the difference in distance to two stations at known locations by broadcast signals at known times.&#34; - en.wikipedia.org/wiki/Multilateration Abstract A single motivated individual with several hundred USD and a hobbyist level of competency in electronics and …" />
+
+        <meta property="og:site_name" content="Michael Jurasovic" />
+        <meta property="og:type" content="article"/>
+        <meta property="og:title" content="Multilateration in 2D: IoT/LoRaWAN Mass Surveillance"/>
+        <meta property="og:url" content="./multilateration-in-2d-iotlorawan-mass-surveillance.html"/>
+        <meta property="og:description" content="&#34;Multilateration (MLAT) is a surveillance technique based on the measurement of the difference in distance to two stations at known locations by broadcast signals at known times.&#34; - en.wikipedia.org/wiki/Multilateration Abstract A single motivated individual with several hundred USD and a hobbyist level of competency in electronics and …"/>
+        <meta property="article:published_time" content="2010-12-03" />
+            <meta property="article:section" content="misc" />
+            <meta property="article:author" content="Michael Jurasovic" />
+
+
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="./theme/css/bootstrap.yeti.min.css" type="text/css"/>
+    <link href="./theme/css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="./theme/css/pygments/autumn.css" rel="stylesheet">
+    <link rel="stylesheet" href="./theme/css/style.css" type="text/css"/>
+        <link href="./static/css/custom.css" rel="stylesheet">
+
+
+
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="./" class="navbar-brand">
+Michael Jurasovic            </a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                    <li><a href="https://github.com/jurasofish">Github</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</div> <!-- /.navbar -->
+
+<!-- Banner -->
+<!-- End Banner -->
+
+<!-- Content Container -->
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="./multilateration-in-2d-iotlorawan-mass-surveillance.html"
+                       rel="bookmark"
+                       title="Permalink to Multilateration in 2D: IoT/LoRaWAN Mass Surveillance">
+                        Multilateration in 2D: IoT/LoRaWAN Mass Surveillance
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <time datetime="2010-12-03T10:20:00+11:00"> Fri 03 December 2010</time>
+                    by
+                    <a href="./author/michael-jurasovic.html"> Michael Jurasovic</a>
+                    <br><br>
+                </div>
+                <p>"<em>Multilateration (MLAT) is a surveillance technique based on the measurement of the difference in distance to two stations at known locations by broadcast signals at known times.</em>" - <a href="http://en.wikipedia.org/wiki/Multilateration">en.wikipedia.org/wiki/Multilateration</a></p>
+<h2>Abstract</h2>
+<p>A single motivated individual with several hundred USD and a hobbyist level of competency in electronics and programming would be able to set up a mass surveillance system to track individual LoRa IoT devices on the scale of a small city, provided that the geography of the city is accommodating to the placement of receiving devices (e.g. surrounded by hills).</p>
+<h2>Locating the source of a signal transmission - intuition</h2>
+<p>When a signal is transmitted by a radio device it propagates through the atmosphere at approximately the speed of light - that is, approximately <span class="math">\(v = 3 \text{e} 8ms^{-1}\)</span>. </p>
+<p>If this signal is received by two receivers (towers), the time difference of arrival (<span class="math">\(\text{TDOA}\)</span>) between the first and second tower can be determined. <span class="math">\(\text{TDOA} = t_1 - t_0\)</span> where <span class="math">\(t_0\)</span> is the time the signal is received first and <span class="math">\(t_1\)</span> is the time the signal is received second. The towers require synchronized high accuracy clocks, which can be achieved in practice with a GPS clock on each tower.</p>
+<p>The below animation shows a signal propagating from a transmitter "Tx" and being received by two towers at different times, allowing the <span class="math">\(\text{TDOA}\)</span> to be calculated.</p>
+<p align="center"><img src="./multilateration/animations/tdoa.gif"></p>
+
+<p>This <span class="math">\(\text{TDOA}\)</span> can be used to determine the <em>difference</em> in distance that the transmitter is located from the towers. For example, assume that the transmitter is on a circle of radius <span class="math">\(d\)</span> metres from tower 1, where the signal was received first. Then it must also be on a circle of radius <span class="math">\(d+v \times \text{TDOA}\)</span> metres from tower 0, where the signal was received second. The device must then lie at the intersection of the two circles, giving two possible locations (or one if the circles only touch, or none if the circles do not touch).</p>
+<p>By iterating over a range of values for <span class="math">\(d\)</span> and at each iteration finding the intersection of the two circles, a locus of possible transmitter locations can be determined. This produces a hyperbolic curve on which the transmitter lies. Notably, it is not required to know <em>when</em> the signal was first transmitted - as you would with trilateration - and so no communication with the transmitter is required beyond simply identifying the signal.</p>
+<p>The below animation shows circles of increasing radius around the two towers and the resulting hyperbolic locus of intersections as <span class="math">\(d\)</span> is increased. The circle around tower 1 has a radius of <span class="math">\(r_1=d\)</span>, and the circle around tower 0 has a radius of <span class="math">\(r_0=d+\text{TDOA} \times v\)</span> (noting <span class="math">\(\text{TDOA} \times v\)</span> is constant and <span class="math">\(\text{TDOA}\)</span> comes from the previous animation). </p>
+<p align="center"><img src="./multilateration/animations/locus.gif"></p>
+
+<p>With <span class="math">\(n\)</span> towers, this process can be repeated between the tower that first received the message and every other tower to produce <span class="math">\(n-1\)</span> loci. In general, with three towers the device location can be narrowed down to at least two positions and with four towers to exactly one position. There are some cases, depending on the relative geometry of the towers and transmitter and the error in the timestamping, where this is not the case.</p>
+<p align="center"><img src="./multilateration/animations/loci.gif"></p>
+
+<p>The accuracy of the determined location will depend on the accuracy of the timestamping, the effects of diffraction and obstacles on path length, the relative geometry of the transmitter and towers, etc. The approximation of the problem to two dimensions will also introduce error.</p>
+<h2>Analysis</h2>
+<p>Multilateration was just explained in an intuitive manner. However, it is convenient to have a set of mathematical expressions that describe the system if the location of the transmitter is to be found. This analysis is inspired heavily by <a href="http://blog.andersen.im/2012/07/signal-emitter-positioning-using-multilateration">André Andersen's</a> similar work.</p>
+<p>Consider, in Euclidean <span class="math">\(\mathbb{R}^{2}\)</span> space, a transmitter located at <span class="math">\(\vec{x}\)</span> whose transmission at time <span class="math">\(t_0\)</span> propagates at speed <span class="math">\(v \ ms^{-1}\)</span> and is received by a set of <span class="math">\(n\)</span> towers. Let the tower that receives this transmission first be at location <span class="math">\(\vec{p}_c\)</span> with receive time <span class="math">\(t_c\)</span>. Let the remaining <span class="math">\(n-1\)</span> towers be located at <span class="math">\(\vec{p}_i\)</span> with transmission receive times <span class="math">\(t_i\)</span>.</p>
+<p>For the first tower, <span class="math">\(\vec{p}_c\)</span>, we can say that the distance between the transmitter <span class="math">\(\vec{x}\)</span> and the tower is equal to the transmission propagation speed multiplied by the time of flight.
+</p>
+<div class="math">$$
+\|\vec{x} - \vec{p}_c\| = v(t_c-t_0)
+$$</div>
+<p>We can make a similar statement for each of the other towers.
+</p>
+<div class="math">$$
+\begin{align}
+\|\vec{x} - \vec{p}_i\| &amp;= v(t_i-t_0) \\
+&amp;= v(t_i - t_c + t_c - t_0) \\
+&amp;= v(t_i - t_c) + v(t_c - t_0) \\
+\end{align}
+$$</div>
+<p>Combining these two expressions we obtain the following, where the only unknown is <span class="math">\(\vec{x}\)</span>.
+</p>
+<div class="math">$$
+\|\vec{x} - \vec{p}_c\| = \|\vec{x} - \vec{p}_i\| - v(t_i - t_c)
+$$</div>
+<p>Expanding this out we obtain a set of <span class="math">\(n-1\)</span> expressions, where there are <span class="math">\(n\)</span> towers in total. Subscript <span class="math">\(x\)</span> and <span class="math">\(y\)</span> denote the x and y components of a vector respectively.
+</p>
+<div class="math">$$
+\begin{align}
+&amp;\|\vec{x} - \vec{p}_c\| - \|\vec{x} - \vec{p}_i\| + v(t_i - t_c) &amp;= 0 &amp;, \quad i = 1, ..., n-1 \\
+\Rightarrow \ &amp; \sqrt{(\vec{x}_x - \vec{p}_{c,x})^2 + (\vec{x}_y - \vec{p}_{c,y})^2}
+              - \sqrt{(\vec{x}_x - \vec{p}_{i,x})^2 + (\vec{x}_y - \vec{p}_{i,y})^2} 
+              + v(t_i - t_c) &amp;= 0 &amp;, \quad i = 1, ..., n-1 \\
+\end{align}
+$$</div>
+<p>Each of these equations represents a single hyperbola. These hyperbolas can be plotted individually, producing the same graphs shown above by taking circle intersections, or they can be solved by finding a value of <span class="math">\(\vec{x}\)</span> that minimizes their error. </p>
+<h2>Implications: IoT and LoRaWAN</h2>
+<p>Multilateration can be used to locate the source of a transmission if 
+1. the transmission can be received in several locations, and 
+2. the receive time can be accurately recorded at each location.</p>
+<p>Furthermore, if one transmitter's signal contains a persistent and unencrypted transmitter ID then it will be possible to track the location of that device.</p>
+<p>One emerging IoT technology, LoRa/LoRaWAN, allows these requirements to be satisfied cheaply with hobbyist equipment while also transmitting a pseudo-persistent unencrypted device ID. Every device in a LoRaWAN network is given a 32-bit device address - akin to an IPv4 or IPv6 address - that uniquely identifies it on a network. This address is not globally unique, but is unique within a single LoRaWAN network. This address is assigned by the network operator and can be re-assigned at any time, though typically the same address is used for a substantial length of time, making the address pseudo-persistent - again akin to an IPv4 or IPv6 address. In cases where the device is activated by personalization, the device will always use the same address.</p>
+<p>Sections 4.3.1.6, 4.3.3, and 4.4.2 of the LoRaWAN <a href="./lorawantm_specification_-v1.1.pdf">specification</a> specify the encryption of uplink messages (messages sent from an IoT device to the network). Notably, the device address (DevAddr) is never encrypted; in fact it is required that the address be known (unencrypted) in order to decrypt the encrypted portions of the message. Any person listening for LoRa transmissions will receive these messages and will be able to read the device address.</p>
+<p>LoRa transmissions can typically travel at least 1km, and distances of up to at least 15km can be attained in real-world conditions. As a result, only a low density of receivers need be installed in order to receive all messages over a large geographical area. For example the city of Wellington, New Zealand, is surrounded by hills. A handful of receivers atop, or partway up, some of the hills would be sufficient to cover the entire city. To cover the main portion of the city with three or four overlapping receivers, as required for multilateration, would not be difficult.</p>
+<p>LoRa receivers with GPS are cheap - the Dragino LoRa/GPS Shield for Arduino comes with a LoRa module and a GPS module with 10ns timing accuracy and typically sells for about 50 USD. This device is additionally easy to configure and use, with an abundance of resources available online.</p>
+<h2>Summary</h2>
+<p>Given these three points - LoRa messages contain a pseudo-persistent unique ID, LoRa messages can be received over large distances, and LoRa messages can be received and accurately timestamped with cheap hobbyist equipment - there is a very real possibility to create a passive mass surveillance network that tracks individual LoRa devices. This is a severe privacy concern for applications such as vehicle, person (e.g. elderly), and goods tracking.</p>
+<h2>This notebook</h2>
+<p>This notebook presents a small python script that produces a set of loci of possible transmitter locations given a set of towers with locations and signal receive times. Additionally, the code used to create the animations is given.</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">multilaterate</span> <span class="kn">import</span> <span class="n">get_loci</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">least_squares</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="c1"># How many towers. All towers recieve the transmission.</span>
+<span class="n">num_towers</span> <span class="o">=</span> <span class="mi">4</span>
+
+<span class="c1"># Metre length of a square containing the transmitting</span>
+<span class="c1"># device, centred around (x, y) = (0, 0). Device will be randomly placed</span>
+<span class="c1"># in this area.</span>
+<span class="n">tx_square_side</span> <span class="o">=</span> <span class="mf">5e3</span>
+
+<span class="c1"># Metre length of a square containing the towers,</span>
+<span class="c1"># centred around (x, y) = (0, 0). towers will be randomly placed</span>
+<span class="c1"># in this area.</span>
+<span class="n">rx_square_side</span> <span class="o">=</span> <span class="mf">25e3</span>
+
+<span class="c1"># Speed of transmission propogation. Generally equal to speed of </span>
+<span class="c1"># light for radio signals.</span>
+<span class="n">v</span> <span class="o">=</span> <span class="mf">3e8</span>
+
+<span class="c1"># Time at which transmission is performed. Really just useful to</span>
+<span class="c1"># make sure the code is using relative times rather than depending on one</span>
+<span class="c1"># of the receive times being zero.</span>
+<span class="n">t_0</span> <span class="o">=</span> <span class="mf">2.5</span>
+
+<span class="c1"># Metre increments to radii of circles when generating locus of</span>
+<span class="c1"># circle intersection.</span>
+<span class="n">delta_d</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="c1"># Max distance a transmission will be from the tower that first</span>
+<span class="c1"># received the transmission. This puts an upper bound on the radii of the</span>
+<span class="c1"># circle, thus limiting the size of the locus to be near the towers.</span>
+<span class="n">max_d</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">20e3</span><span class="p">)</span>
+
+<span class="c1"># Standard deviation of noise added to the</span>
+<span class="c1"># receive times at the towers. Mean is zero.</span>
+<span class="n">rec_time_noise_stdd</span> <span class="o">=</span> <span class="mf">1e-6</span>
+
+<span class="c1"># Whether to plot circles that would be</span>
+<span class="c1"># used if performing trilateration. These are circles that are centred</span>
+<span class="c1"># on the towers and touch the transmitter site.</span>
+<span class="n">plot_trilateration_circles</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1"># Whether to plot a straight line</span>
+<span class="c1"># between every pair of towers. This is useful for visualising the</span>
+<span class="c1"># hyperbolic loci focal points.</span>
+<span class="n">plot_lines_between_towers</span> <span class="o">=</span> <span class="kc">False</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="c1"># Generate towers with x and y coordinates.</span>
+<span class="c1"># for tower i: x, y = towers[i][0], towers[i][1]</span>
+<span class="n">towers</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">num_towers</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">-</span><span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">rx_square_side</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;towers:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">towers</span><span class="p">)</span>
+
+<span class="c1"># location of transmitting device with tx[0] being x and tx[1] being y.</span>
+<span class="n">tx</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">-</span><span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">tx_square_side</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;tx:&#39;</span><span class="p">,</span> <span class="n">tx</span><span class="p">)</span>
+
+<span class="c1"># Distances from each tower to the transmitting device,</span>
+<span class="c1"># simply triangle hypotenuse.</span>
+<span class="c1"># distances[i] is distance from tower i to transmitter.</span>
+<span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="p">(</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="p">)</span><span class="o">**</span><span class="mf">0.5</span>
+                       <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">towers</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;distances:&#39;</span><span class="p">,</span> <span class="n">distances</span><span class="p">)</span>
+
+<span class="c1"># Time at which each tower receives the transmission.</span>
+<span class="n">rec_times</span> <span class="o">=</span> <span class="n">distances</span><span class="o">/</span><span class="n">v</span> <span class="o">+</span> <span class="n">t_0</span>
+<span class="c1"># Add noise to receive times</span>
+<span class="n">rec_times</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">rec_time_noise_stdd</span><span class="p">,</span>
+                              <span class="n">size</span><span class="o">=</span><span class="n">num_towers</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;rec_times:&#39;</span><span class="p">,</span> <span class="n">rec_times</span><span class="p">)</span>
+
+<span class="c1"># Get the loci.</span>
+<span class="n">loci</span> <span class="o">=</span> <span class="n">get_loci</span><span class="p">(</span><span class="n">rec_times</span><span class="p">,</span> <span class="n">towers</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">delta_d</span><span class="p">,</span> <span class="n">max_d</span><span class="p">)</span>
+
+<span class="c1"># Plot towers and transmission location.</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">max_width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">tx_square_side</span><span class="p">,</span> <span class="n">rx_square_side</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="n">max_width</span><span class="o">*-</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_width</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">((</span><span class="n">max_width</span><span class="o">*-</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_width</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">towers</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Tower &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Tx&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+<span class="c1"># Iterate over every unique combination of towers and plot nifty stuff.</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_towers</span><span class="p">):</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">plot_trilateration_circles</span><span class="p">):</span>
+        <span class="c1"># Circle from tower i to tx site</span>
+        <span class="n">circle1</span> <span class="o">=</span> <span class="p">(</span><span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">distances</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">circle</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">Circle</span><span class="p">((</span><span class="n">circle1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">circle1</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                            <span class="n">radius</span><span class="o">=</span><span class="n">circle1</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">add_artist</span><span class="p">(</span><span class="n">circle</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_towers</span><span class="p">):</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">plot_lines_between_towers</span><span class="p">):</span>
+            <span class="c1"># Line between towers</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">((</span><span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">towers</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">0</span><span class="p">]),</span>
+                    <span class="p">(</span><span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">towers</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">1</span><span class="p">]))</span>
+
+<span class="k">for</span> <span class="n">locus</span> <span class="ow">in</span> <span class="n">loci</span><span class="p">:</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">locus</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">locus</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="c">towers:</span>
+<span class="c"> [[ -2006.09826991  -6818.07867897]</span>
+<span class="c"> [   101.31584818   8158.92916584]</span>
+<span class="c"> [-10893.22757653   3893.40549794]</span>
+<span class="c"> [ -8595.14625748   8895.4077718 ]]</span>
+<span class="c">tx: [ 731.70475905 2184.19298779]</span>
+<span class="c">distances: [ 9409.38151992  6007.90001384 11749.91315762 11490.45489794]</span>
+<span class="c">rec_times: [2.50003146 2.50002049 2.50003941 2.50003865]</span>
+</pre></div>
+
+
+<p><img alt="png" src="./multilateration/output_3_1.png"></p>
+<div class="highlight"><pre><span></span><span class="c1"># plot the same hyperbola using the derived expressions.</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">max_width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">tx_square_side</span><span class="p">,</span> <span class="n">rx_square_side</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="n">max_width</span><span class="o">*-</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_width</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">((</span><span class="n">max_width</span><span class="o">*-</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_width</span><span class="p">))</span>
+
+<span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">rec_times</span><span class="p">)</span>  <span class="c1"># Tower that received first.</span>
+<span class="n">p_c</span> <span class="o">=</span> <span class="n">towers</span><span class="p">[</span><span class="n">c</span><span class="p">]</span>
+<span class="n">t_c</span> <span class="o">=</span> <span class="n">rec_times</span><span class="p">[</span><span class="n">c</span><span class="p">]</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">50000</span><span class="p">,</span> <span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">50000</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">50000</span><span class="p">,</span> <span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">50000</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_towers</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">c</span><span class="p">:</span>
+        <span class="k">continue</span>
+
+    <span class="n">p_i</span> <span class="o">=</span> <span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="n">t_i</span> <span class="o">=</span> <span class="n">rec_times</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
+        <span class="p">(</span>
+           <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">x</span><span class="o">-</span><span class="n">p_c</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">p_c</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> 
+         <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">x</span><span class="o">-</span><span class="n">p_i</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">p_i</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> 
+         <span class="o">+</span> <span class="n">v</span><span class="o">*</span><span class="p">(</span><span class="n">t_i</span> <span class="o">-</span> <span class="n">t_c</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+
+
+<p><img alt="png" src="./multilateration/output_4_0.png"></p>
+<div class="highlight"><pre><span></span><span class="c1"># Solve the location of the transmitter.</span>
+
+<span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">rec_times</span><span class="p">)</span>
+<span class="n">p_c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">towers</span><span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">t_c</span> <span class="o">=</span> <span class="n">rec_times</span><span class="p">[</span><span class="n">c</span><span class="p">]</span>
+
+<span class="c1"># Remove the c tower to allow for vectorization.</span>
+<span class="n">all_p_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">towers</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">all_t_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">rec_times</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">eval_solution</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; x is 2 element array of x, y of the transmitter&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span>
+          <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">p_c</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">all_p_i</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> 
+        <span class="o">+</span> <span class="n">v</span><span class="o">*</span><span class="p">(</span><span class="n">all_t_i</span> <span class="o">-</span> <span class="n">t_c</span><span class="p">)</span> 
+    <span class="p">)</span>
+
+<span class="c1"># Initial guess.</span>
+<span class="n">x_init</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+
+<span class="c1"># Find a value of x such that eval_solution is minimized.</span>
+<span class="c1"># Remember the receive times have error added to them: rec_time_noise_stdd.</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">least_squares</span><span class="p">(</span><span class="n">eval_solution</span><span class="p">,</span> <span class="n">x_init</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Actual emitter location:    (</span><span class="si">{</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">) &quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Calculated emitter locaion: (</span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in metres:            </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">tx</span><span class="o">-</span><span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># And now plot the solution.</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">max_width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">tx_square_side</span><span class="p">,</span> <span class="n">rx_square_side</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="n">max_width</span><span class="o">*-</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_width</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">((</span><span class="n">max_width</span><span class="o">*-</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_width</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">locus</span> <span class="ow">in</span> <span class="n">loci</span><span class="p">:</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">locus</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">locus</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Actual&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Solved&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="err">Actual emitter location:    (731.7, 2184.2) </span>
+<span class="err">Calculated emitter locaion: (711.6, 2129.4)</span>
+<span class="err">Error in metres:            58.4</span>
+</pre></div>
+
+
+<p><img alt="png" src="./multilateration/output_5_1.png"></p>
+<h2>Animations</h2>
+<p>Below cells generate the animations used above. Some variable re-use.</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">matplotlib.animation</span> <span class="kn">import</span> <span class="n">FuncAnimation</span>
+<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">HTML</span><span class="p">,</span> <span class="n">Image</span>
+<span class="kn">from</span> <span class="nn">multilaterate</span> <span class="kn">import</span> <span class="n">get_locus</span>
+
+<span class="c1"># For animation GIF output:</span>
+<span class="c1"># brew install imagemagick</span>
+<span class="c1"># brew works on mac, different for different OS I guess.</span>
+
+<span class="c1"># If using to_html5_video:</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">plt.rcParams[&#39;animation.ffmpeg_path&#39;] = &#39;/usr/local/Cellar/&#39; \</span>
+<span class="sd">                                        &#39;ffmpeg/4.0.2/bin/ffmpeg&#39;</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+
+<span class="n">towers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">5e3</span><span class="p">,</span> <span class="mf">13e3</span><span class="p">],</span> <span class="p">[</span><span class="mf">16e3</span><span class="p">,</span> <span class="mf">5e3</span><span class="p">],</span> <span class="p">[</span><span class="mf">5e3</span><span class="p">,</span> <span class="mf">7e3</span><span class="p">],</span>
+                   <span class="p">[</span><span class="mf">12.5e3</span><span class="p">,</span> <span class="mf">1e3</span><span class="p">]])</span>
+<span class="n">tx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">15e3</span><span class="p">,</span> <span class="mf">8e3</span><span class="p">])</span>
+<span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="p">(</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="p">)</span><span class="o">**</span><span class="mf">0.5</span>
+                       <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">towers</span><span class="p">])</span>
+<span class="n">rec_times</span> <span class="o">=</span> <span class="n">distances</span><span class="o">/</span><span class="n">v</span>
+
+<span class="n">v</span> <span class="o">=</span> <span class="mf">3e8</span>
+<span class="n">delta_d</span> <span class="o">=</span> <span class="mi">10</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="c1">## Create a visualisation for TDOA</span>
+
+<span class="c1"># Plot towers and transmission location.</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mf">20e3</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mf">20e3</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Tower &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Tx&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+<span class="n">circle</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">Circle</span><span class="p">((</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                    <span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">add_artist</span><span class="p">(</span><span class="n">circle</span><span class="p">)</span>
+
+<span class="c1"># Annotations, to be updated during animation</span>
+<span class="n">cur_time</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;t = 0&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">1e3</span><span class="p">,</span> <span class="mf">19e3</span><span class="p">))</span>
+<span class="n">t0</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Tower 0 received at t = &#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">1e3</span><span class="p">,</span> <span class="mf">18e3</span><span class="p">))</span>
+<span class="n">t1</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Tower 1 received at t = &#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">1e3</span><span class="p">,</span> <span class="mf">17e3</span><span class="p">))</span>
+<span class="n">TDOA_ann</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;TDOA = &#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">1e3</span><span class="p">,</span> <span class="mf">16e3</span><span class="p">))</span>
+
+<span class="n">v_vec</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">arrow</span><span class="p">(</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">1e3</span><span class="p">,</span>
+                 <span class="n">head_width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">head_length</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">fc</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ec</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+<span class="n">v_ann</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;v = </span><span class="si">{:.0E}</span><span class="s1"> m/s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="p">(</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mf">1e3</span><span class="p">))</span>
+
+<span class="n">n_frames</span> <span class="o">=</span> <span class="mi">300</span>
+<span class="n">max_seconds</span> <span class="o">=</span> <span class="mf">50e-6</span>
+
+<span class="n">t0_rec</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">t1_rec</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">TDOA</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="k">def</span> <span class="nf">animate</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+    <span class="k">global</span> <span class="n">t0_rec</span><span class="p">,</span> <span class="n">t1_rec</span><span class="p">,</span> <span class="n">TDOA</span><span class="p">,</span> <span class="n">v_vec</span><span class="p">,</span> <span class="n">v_ann</span>
+
+    <span class="n">t</span> <span class="o">=</span> <span class="n">i</span><span class="o">/</span><span class="n">n_frames</span> <span class="o">*</span> <span class="n">max_seconds</span>
+    <span class="n">radius</span> <span class="o">=</span> <span class="n">v</span> <span class="o">*</span> <span class="n">t</span>
+
+    <span class="n">v_vec</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+    <span class="n">v_vec</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">arrow</span><span class="p">(</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">radius</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">1e3</span><span class="p">,</span>
+                 <span class="n">head_width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">head_length</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">fc</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ec</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+    <span class="n">v_ann</span><span class="o">.</span><span class="n">set_position</span><span class="p">((</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.5e3</span><span class="p">,</span> <span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">radius</span><span class="o">+</span><span class="mf">1.5e3</span><span class="p">))</span>
+
+    <span class="n">circle</span><span class="o">.</span><span class="n">radius</span> <span class="o">=</span> <span class="n">radius</span>
+
+    <span class="n">cur_time</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s1">&#39;t = </span><span class="si">{:.2E}</span><span class="s1"> s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="n">t</span> <span class="o">&gt;=</span> <span class="n">rec_times</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">t0_rec</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">t0_rec</span> <span class="o">=</span> <span class="n">t</span>
+        <span class="n">t0</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="n">t0</span><span class="o">.</span><span class="n">get_text</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="si">{:.2E}</span><span class="s1"> s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t0_rec</span><span class="p">))</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">t</span> <span class="o">&gt;=</span> <span class="n">rec_times</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">t1_rec</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">t1_rec</span> <span class="o">=</span> <span class="n">t</span>
+        <span class="n">t1</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="n">t1</span><span class="o">.</span><span class="n">get_text</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="si">{:.2E}</span><span class="s1"> s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t1_rec</span><span class="p">))</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">t0_rec</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">t1_rec</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">TDOA</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">TDOA</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">t1_rec</span><span class="o">-</span><span class="n">t0_rec</span><span class="p">)</span>
+        <span class="n">TDOA_ann</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="n">TDOA_ann</span><span class="o">.</span><span class="n">get_text</span><span class="p">()</span> \
+                          <span class="o">+</span> <span class="s1">&#39;</span><span class="si">{:.2E}</span><span class="s1"> s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">TDOA</span><span class="p">))</span>
+
+<span class="n">anim</span> <span class="o">=</span> <span class="n">FuncAnimation</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">animate</span><span class="p">,</span>
+                     <span class="n">frames</span><span class="o">=</span><span class="n">n_frames</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mf">16.6</span><span class="p">,</span> <span class="n">blit</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># HTML(anim.to_html5_video()) # doesn&#39;t play nice with github markdown</span>
+<span class="n">anim</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;animations/tdoa.gif&#39;</span><span class="p">,</span> <span class="n">writer</span><span class="o">=</span><span class="s1">&#39;imagemagick&#39;</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="n">Image</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s1">&#39;animations/tdoa.gif&#39;</span><span class="p">)</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="c1">## Create a visualisation for locus</span>
+
+<span class="n">TDOA_dist</span> <span class="o">=</span> <span class="n">v</span><span class="o">*</span><span class="n">TDOA</span>
+
+<span class="c1"># Plot towers and transmission location.</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mf">20e3</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mf">20e3</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Tower &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Tx&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+<span class="n">circle0</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">Circle</span><span class="p">((</span><span class="n">towers</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">towers</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span>
+                    <span class="n">radius</span><span class="o">=</span><span class="mf">1e3</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">circle1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">Circle</span><span class="p">((</span><span class="n">towers</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">towers</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span>
+                    <span class="n">radius</span><span class="o">=</span><span class="mf">1e3</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">add_artist</span><span class="p">(</span><span class="n">circle0</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">add_artist</span><span class="p">(</span><span class="n">circle1</span><span class="p">)</span>
+
+<span class="c1"># Annotations, to be updated during animation</span>
+<span class="n">cur_d_ann</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;d = 0&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">1e3</span><span class="p">,</span> <span class="mf">19e3</span><span class="p">))</span>
+<span class="n">r0_ann</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Tower 0 radius r0 = &#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">1e3</span><span class="p">,</span> <span class="mf">18e3</span><span class="p">))</span>
+<span class="n">r1_ann</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Tower 1 radius r1 = &#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">1e3</span><span class="p">,</span> <span class="mf">17e3</span><span class="p">))</span>
+
+<span class="n">n_frames</span> <span class="o">=</span> <span class="mi">300</span>
+<span class="n">max_d</span> <span class="o">=</span> <span class="mf">10e3</span>
+
+<span class="n">locus_plot</span><span class="p">,</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([],</span> <span class="p">[],</span> <span class="n">marker</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">animate</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+    <span class="c1"># global t0_rec, t1_rec, TDOA, v_vec, v_ann</span>
+
+    <span class="n">d</span> <span class="o">=</span> <span class="n">i</span><span class="o">/</span><span class="n">n_frames</span> <span class="o">*</span> <span class="n">max_d</span>
+
+    <span class="n">circle0</span><span class="o">.</span><span class="n">radius</span> <span class="o">=</span> <span class="n">d</span> <span class="o">+</span> <span class="n">TDOA_dist</span>
+    <span class="n">circle1</span><span class="o">.</span><span class="n">radius</span> <span class="o">=</span> <span class="n">d</span>
+
+    <span class="n">cur_d_ann</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s1">&#39;d = </span><span class="si">{:.2E}</span><span class="s1"> m&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
+    <span class="n">r0_ann</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s1">&#39;Tower 0 radius r0 = </span><span class="si">{:.2E}</span><span class="s1"> m&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">d</span> 
+                                                <span class="o">+</span> <span class="n">TDOA_dist</span><span class="p">))</span>
+    <span class="n">r1_ann</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s1">&#39;Tower 1 radius r1 = </span><span class="si">{:.2E}</span><span class="s1"> m&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
+
+    <span class="n">locus</span> <span class="o">=</span> <span class="n">get_locus</span><span class="p">(</span><span class="n">tower_1</span> <span class="o">=</span> <span class="p">(</span><span class="n">towers</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">towers</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span>
+                      <span class="n">tower_2</span> <span class="o">=</span> <span class="p">(</span><span class="n">towers</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">towers</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span>
+                      <span class="n">time_1</span> <span class="o">=</span> <span class="n">t0_rec</span><span class="p">,</span> <span class="n">time_2</span> <span class="o">=</span> <span class="n">t1_rec</span><span class="p">,</span>
+                      <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="p">,</span> <span class="n">delta_d</span> <span class="o">=</span> <span class="n">delta_d</span><span class="p">,</span> <span class="n">max_d</span><span class="o">=</span><span class="n">d</span><span class="p">)</span>
+    <span class="n">locus_plot</span><span class="o">.</span><span class="n">set_xdata</span><span class="p">(</span><span class="n">locus</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">locus_plot</span><span class="o">.</span><span class="n">set_ydata</span><span class="p">(</span><span class="n">locus</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="n">anim</span> <span class="o">=</span> <span class="n">FuncAnimation</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">animate</span><span class="p">,</span>
+                     <span class="n">frames</span><span class="o">=</span><span class="n">n_frames</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mf">16.6</span><span class="p">,</span> <span class="n">blit</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># HTML(anim.to_html5_video()) # doesn&#39;t play nice with github markdown</span>
+<span class="n">anim</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;animations/locus.gif&#39;</span><span class="p">,</span> <span class="n">writer</span><span class="o">=</span><span class="s1">&#39;imagemagick&#39;</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="n">Image</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s1">&#39;animations/locus.gif&#39;</span><span class="p">)</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="c1">## Create a visualisation for loci</span>
+
+<span class="c1"># Plot towers and transmission location.</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mf">20e3</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mf">20e3</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">towers</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Tower &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Tx&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">tx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tx</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+<span class="n">circles</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">locus_plots</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">towers</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+    <span class="n">circle</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">Circle</span><span class="p">((</span><span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">towers</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span>
+                         <span class="n">radius</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">add_artist</span><span class="p">(</span><span class="n">circle</span><span class="p">)</span>
+    <span class="n">circles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">circle</span><span class="p">)</span>
+
+    <span class="n">locus_plot</span><span class="p">,</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([],</span> <span class="p">[],</span> <span class="n">marker</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">locus_plots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">locus_plot</span><span class="p">)</span>
+
+<span class="c1"># Annotations, to be updated during animation</span>
+<span class="n">cur_d_ann</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;d = 0&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">1e3</span><span class="p">,</span> <span class="mf">19e3</span><span class="p">))</span>
+
+<span class="n">n_frames</span> <span class="o">=</span> <span class="mi">600</span>
+<span class="n">max_d</span> <span class="o">=</span> <span class="mf">10e3</span>
+
+<span class="k">def</span> <span class="nf">animate</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+    <span class="c1"># global t0_rec, t1_rec, TDOA, v_vec, v_ann</span>
+
+    <span class="n">d</span> <span class="o">=</span> <span class="n">i</span><span class="o">/</span><span class="n">n_frames</span> <span class="o">*</span> <span class="n">max_d</span>
+    <span class="n">cur_d_ann</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s1">&#39;d = </span><span class="si">{:.2E}</span><span class="s1"> m&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
+
+    <span class="n">first_tower</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">rec_times</span><span class="p">))</span>
+    <span class="n">circles</span><span class="p">[</span><span class="n">first_tower</span><span class="p">]</span><span class="o">.</span><span class="n">radius</span> <span class="o">=</span> <span class="n">d</span>
+
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">towers</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">x</span><span class="o">!=</span> <span class="n">first_tower</span><span class="p">]:</span>
+        <span class="c1"># print(&#39;tower&#39;, str(first_tower), &#39;to&#39;, str(j))</span>
+        <span class="n">locus</span> <span class="o">=</span> <span class="n">get_locus</span><span class="p">(</span><span class="n">tower_1</span><span class="o">=</span><span class="p">(</span><span class="n">towers</span><span class="p">[</span><span class="n">first_tower</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                                   <span class="n">towers</span><span class="p">[</span><span class="n">first_tower</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span>
+                          <span class="n">tower_2</span><span class="o">=</span><span class="p">(</span><span class="n">towers</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">towers</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span>
+                          <span class="n">time_1</span><span class="o">=</span><span class="n">rec_times</span><span class="p">[</span><span class="n">first_tower</span><span class="p">],</span>
+                          <span class="n">time_2</span><span class="o">=</span><span class="n">rec_times</span><span class="p">[</span><span class="n">j</span><span class="p">],</span>
+                          <span class="n">v</span><span class="o">=</span><span class="n">v</span><span class="p">,</span> <span class="n">delta_d</span><span class="o">=</span><span class="n">delta_d</span><span class="p">,</span> <span class="n">max_d</span><span class="o">=</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">locus_plots</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">set_xdata</span><span class="p">(</span><span class="n">locus</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">locus_plots</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">set_ydata</span><span class="p">(</span><span class="n">locus</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="n">TDOA_j</span> <span class="o">=</span> <span class="n">v</span> <span class="o">*</span> <span class="p">(</span><span class="n">rec_times</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">rec_times</span><span class="p">[</span><span class="n">first_tower</span><span class="p">])</span>
+        <span class="n">circles</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">radius</span> <span class="o">=</span> <span class="n">d</span> <span class="o">+</span> <span class="n">TDOA_j</span>
+
+<span class="n">anim</span> <span class="o">=</span> <span class="n">FuncAnimation</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">animate</span><span class="p">,</span>
+                     <span class="n">frames</span><span class="o">=</span><span class="n">n_frames</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mf">16.6</span><span class="p">,</span> <span class="n">blit</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># HTML(anim.to_html5_video()) # doesn&#39;t play nice with github markdown</span>
+<span class="n">anim</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;animations/loci.gif&#39;</span><span class="p">,</span> <span class="n">writer</span><span class="o">=</span><span class="s1">&#39;imagemagick&#39;</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="n">Image</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s1">&#39;animations/loci.gif&#39;</span><span class="p">)</span>
+</pre></div>
+
+
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/latest.js?config=TeX-AMS-MML_HTMLorMML';
+
+    var configscript = document.createElement('script');
+    configscript.type = 'text/x-mathjax-config';
+    configscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'none' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        availableFonts: ['STIX', 'TeX']," +
+        "        preferredFont: 'STIX'," +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(configscript);
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
+            </div>
+            <!-- /.entry-content -->
+        </article>
+    </section>
+
+        </div>
+    </div>
+</div>
+<!-- End Content Container -->
+
+<footer>
+   <div class="container">
+      <div class="row">
+         <div class="col-md-8 col-md-offset-2">
+            <hr>
+            &copy; 2010 Michael Jurasovic
+            &middot; Powered by <a href="https://github.com/getpelican/pelican-themes/tree/master/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>            <br><br>
+         </div>
+      </div>
+   </div>
+</footer>
+<script src="./theme/js/jquery.min.js"></script>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="./theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="./theme/js/respond.min.js"></script>
+
+
+
+
+</body>
+</html>
