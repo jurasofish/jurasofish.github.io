@@ -18,15 +18,16 @@ TRANSLATION_FEED_ATOM = None
 AUTHOR_FEED_ATOM = None
 AUTHOR_FEED_RSS = None
 
+
 # Blogroll
-LINKS = (('Pelican', 'https://getpelican.com/'),
-         ('Python.org', 'https://www.python.org/'),
-         ('Jinja2', 'https://palletsprojects.com/p/jinja/'),
-         ('You can modify those links in your config file', '#'),)
+LINKS = (
+    ('Github', 'https://github.com/jurasofish'),
+)
 
 # Social widget
-SOCIAL = (('You can add links in your config file', '#'),
-          ('Another social link', '#'),)
+SOCIAL = (
+    ('Github', 'https://github.com/jurasofish'),
+)
 
 DEFAULT_PAGINATION = False
 
@@ -51,3 +52,4 @@ PYGMENTS_STYLE = 'autumn'
 # CUSTOM_CSS = r'static\custom.css'
 # STATIC_PATHS = ['images', r'extra\custom.css']
 # EXTRA_PATH_METADATA = {r'extra\custom.css': {'path': r'static\custom.css'}}
+HIDE_SIDEBAR = True
