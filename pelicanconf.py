@@ -34,3 +34,9 @@ OUTPUT_PATH = 'docs/'
 
 # Uncomment following line if you want document-relative URLs when developing
 #RELATIVE_URLS = True
+
+'''
+PLUGINS = [
+    'pelican.plugins.render_math',
+]
+'''
