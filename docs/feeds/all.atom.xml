@@ -380,8 +380,8 @@ This simple approach serves as a baseline to establish what the expected results
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="err"&gt;MLFs at each node calculated using pandapower with finite differences.&lt;/span&gt;
-&lt;span class="err"&gt;[1.000 0.952 0.961 1.000 1.011 0.961 0.966 0.952 1.010]&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;MLFs at each node calculated using pandapower with finite differences.
+[1.000 0.952 0.961 1.000 1.011 0.961 0.966 0.952 1.010]
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -493,8 +493,8 @@ e.g. &lt;code&gt;x = np.array([...]); x[1] = 2&lt;/code&gt; is not permitted, as
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="err"&gt;MLFs at each node calculated using custom Guass-Seidel with automatic differentiation.&lt;/span&gt;
-&lt;span class="err"&gt;[1.000 0.952 0.961 1.000 1.011 0.961 0.966 0.952 1.010]&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;MLFs at each node calculated using custom Guass-Seidel with automatic differentiation.
+[1.000 0.952 0.961 1.000 1.011 0.961 0.966 0.952 1.010]
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -503,10 +503,10 @@ e.g. &lt;code&gt;x = np.array([...]); x[1] = 2&lt;/code&gt; is not permitted, as
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="err"&gt;MLFs at each node calculated using custom Guass-Seidel with automatic differentiation.&lt;/span&gt;
-&lt;span class="err"&gt;[1.000 1.004 1.036 1.015 1.015 1.031 1.029 1.033 1.043 1.050 1.057 1.054&lt;/span&gt;
-&lt;span class="err"&gt; 1.019 1.041 1.037 1.011 1.033 1.026 1.045 1.014 1.026 1.043 1.063 1.022&lt;/span&gt;
-&lt;span class="err"&gt; 1.019 1.028 1.034 1.034 1.036 1.040]&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;MLFs at each node calculated using custom Guass-Seidel with automatic differentiation.
+[1.000 1.004 1.036 1.015 1.015 1.031 1.029 1.033 1.043 1.050 1.057 1.054
+ 1.019 1.041 1.037 1.011 1.033 1.026 1.045 1.014 1.026 1.043 1.063 1.022
+ 1.019 1.028 1.034 1.034 1.036 1.040]
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -750,14 +750,14 @@ $$&lt;/div&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c"&gt;towers:&lt;/span&gt;
-&lt;span class="c"&gt; [[ -2006.09826991  -6818.07867897]&lt;/span&gt;
-&lt;span class="c"&gt; [   101.31584818   8158.92916584]&lt;/span&gt;
-&lt;span class="c"&gt; [-10893.22757653   3893.40549794]&lt;/span&gt;
-&lt;span class="c"&gt; [ -8595.14625748   8895.4077718 ]]&lt;/span&gt;
-&lt;span class="c"&gt;tx: [ 731.70475905 2184.19298779]&lt;/span&gt;
-&lt;span class="c"&gt;distances: [ 9409.38151992  6007.90001384 11749.91315762 11490.45489794]&lt;/span&gt;
-&lt;span class="c"&gt;rec_times: [2.50003146 2.50002049 2.50003941 2.50003865]&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;towers:
+ [[ -2006.09826991  -6818.07867897]
+ [   101.31584818   8158.92916584]
+ [-10893.22757653   3893.40549794]
+ [ -8595.14625748   8895.4077718 ]]
+tx: [ 731.70475905 2184.19298779]
+distances: [ 9409.38151992  6007.90001384 11749.91315762 11490.45489794]
+rec_times: [2.50003146 2.50002049 2.50003941 2.50003865]
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -844,9 +844,9 @@ $$&lt;/div&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="err"&gt;Actual emitter location:    (731.7, 2184.2) &lt;/span&gt;
-&lt;span class="err"&gt;Calculated emitter locaion: (711.6, 2129.4)&lt;/span&gt;
-&lt;span class="err"&gt;Error in metres:            58.4&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;Actual emitter location:    (731.7, 2184.2) 
+Calculated emitter locaion: (711.6, 2129.4)
+Error in metres:            58.4
 &lt;/pre&gt;&lt;/div&gt;
 
 

@@ -75,8 +75,10 @@ def mlf_fin_diff(net):
 mlf_fin_diff(ppnw.case9())
 ```
 
-    MLFs at each node calculated using pandapower with finite differences.
-    [1.000 0.952 0.961 1.000 1.011 0.961 0.966 0.952 1.010]
+```text
+MLFs at each node calculated using pandapower with finite differences.
+[1.000 0.952 0.961 1.000 1.011 0.961 0.966 0.952 1.010]
+```
     
 
 # II. Automatic Differentiation
@@ -191,8 +193,10 @@ def mlf_auto_diff(net):
 mlf_auto_diff(ppnw.case9())
 ```
 
-    MLFs at each node calculated using custom Guass-Seidel with automatic differentiation.
-    [1.000 0.952 0.961 1.000 1.011 0.961 0.966 0.952 1.010]
+```text
+MLFs at each node calculated using custom Guass-Seidel with automatic differentiation.
+[1.000 0.952 0.961 1.000 1.011 0.961 0.966 0.952 1.010]
+```
     
 
 This works fine with larger networks too. The Gauss-Seidel implementation is by no means efficient though.
@@ -202,8 +206,10 @@ This works fine with larger networks too. The Gauss-Seidel implementation is by 
 mlf_auto_diff(ppnw.case30())
 ```
 
-    MLFs at each node calculated using custom Guass-Seidel with automatic differentiation.
-    [1.000 1.004 1.036 1.015 1.015 1.031 1.029 1.033 1.043 1.050 1.057 1.054
-     1.019 1.041 1.037 1.011 1.033 1.026 1.045 1.014 1.026 1.043 1.063 1.022
-     1.019 1.028 1.034 1.034 1.036 1.040]
+```text
+MLFs at each node calculated using custom Guass-Seidel with automatic differentiation.
+[1.000 1.004 1.036 1.015 1.015 1.031 1.029 1.033 1.043 1.050 1.057 1.054
+ 1.019 1.041 1.037 1.011 1.033 1.026 1.045 1.014 1.026 1.043 1.063 1.022
+ 1.019 1.028 1.034 1.034 1.036 1.040]
+```
     
