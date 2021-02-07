@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="english" prefix="og: http://ogp.me/ns# fb: https://www.facebook.com/2008/fbml">
+<head>
+    <title>Picking Resistors for Parallel and Series Equivalence - Michael Jurasovic</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<link rel="canonical" href="https://jurasofish.github.io/picking-resistors-for-parallel-and-series-equivalence.html">
+
+        <meta name="author" content="Michael Jurasovic" />
+        <meta name="description" content="I came across an interesting question on stack overflow that I couldn&#39;t help answering. The question asks how to determine which resistors from a given pool have an equivalent parallel resistance as close as possible to some target. This jumped out at me as a fun little combinatorial problem to …" />
+
+        <meta property="og:site_name" content="Michael Jurasovic" />
+        <meta property="og:type" content="article"/>
+        <meta property="og:title" content="Picking Resistors for Parallel and Series Equivalence"/>
+        <meta property="og:url" content="https://jurasofish.github.io/picking-resistors-for-parallel-and-series-equivalence.html"/>
+        <meta property="og:description" content="I came across an interesting question on stack overflow that I couldn&#39;t help answering. The question asks how to determine which resistors from a given pool have an equivalent parallel resistance as close as possible to some target. This jumped out at me as a fun little combinatorial problem to …"/>
+        <meta property="article:published_time" content="2021-02-07" />
+            <meta property="article:section" content="misc" />
+            <meta property="article:author" content="Michael Jurasovic" />
+
+
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="https://jurasofish.github.io/theme/css/bootstrap.yeti.min.css" type="text/css"/>
+    <link href="https://jurasofish.github.io/theme/css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="https://jurasofish.github.io/theme/css/pygments/autumn.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://jurasofish.github.io/theme/css/style.css" type="text/css"/>
+        <link href="https://jurasofish.github.io/static/css/custom.css" rel="stylesheet">
+
+        <link href="https://jurasofish.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
+              title="Michael Jurasovic ATOM Feed"/>
+
+
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="https://jurasofish.github.io/" class="navbar-brand">
+Michael Jurasovic            </a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                    <li><a href="https://github.com/jurasofish">GitHub</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</div> <!-- /.navbar -->
+
+<!-- Banner -->
+<!-- End Banner -->
+
+<!-- Content Container -->
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="https://jurasofish.github.io/picking-resistors-for-parallel-and-series-equivalence.html"
+                       rel="bookmark"
+                       title="Permalink to Picking Resistors for Parallel and Series Equivalence">
+                        Picking Resistors for Parallel and Series Equivalence
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <time datetime="2021-02-07T12:17:00+11:00"> Sun 07 February 2021</time>
+                    <br><br>
+                </div>
+                <p>I came across an <a href="https://stackoverflow.com/questions/65912561/python-algorithm-to-approximate-closest-parallel-equivalence-of-resistors-from-a">interesting question</a> on stack overflow that I couldn't help <a href="https://stackoverflow.com/a/65915378/8899565">answering</a>. 
+The question asks how to determine which resistors from a given pool have an equivalent parallel resistance as close as possible to some target.
+This jumped out at me as a fun little combinatorial problem to tackle with integer programming.</p>
+<p>A few google searches didn't turn up any existing work, but it's a tricky one to google because the wording is so similar to asking which (single) resistor value to pick for some task. </p>
+<p>I chose to use the <a href="https://github.com/coin-or/python-mip">python-mip</a> library
+as it's quite clean to use and easy to install.</p>
+<p>All this code is available <a href="https://github.com/jurasofish/resistors">on github</a>.</p>
+<h3>In series</h3>
+<p>To start with, I implemented a program to pick the resistors in series.</p>
+<p>The resistors are picked by setting a binary variable on or off for each resistor in the <span class="math">\(\text{r_in_use}\)</span> list. 
+For example, if <span class="math">\(\text{resistors} = [R_1, R_2, R_3, R_4, ...]\)</span> and the solution finds that <span class="math">\( \text{r_in_use} = [0, 1, 1, 0, ...]\)</span>
+then the solution for the final resistance is <span class="math">\(R_2 + R_3\)</span>.</p>
+<p>For the objective function, I want to minimise the difference between the
+solution resistance and the target resistance - that is, I want to minimise the
+absolute value of the error. To do this a minimax method is used: a value 
+greater than the absolute error is created, and then that value is
+minimised in the objective function - thus minimising the absolute error.
+The absolute error could be calculated exactly by using some more integer
+constraints, but minimax is sufficient in this case.</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mip</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+
+
+<span class="k">def</span> <span class="nf">equivalent_series</span><span class="p">(</span><span class="n">resistors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">target</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Return list of resistors which in series are closest to target resistance.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        resistors: float values of the resistors to choose from. A resistor</span>
+<span class="sd">            value can be used as many times as it occurs in this list.</span>
+<span class="sd">        target: The target resistance.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Optimal resistor values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">mip</span><span class="o">.</span><span class="n">Model</span><span class="p">()</span>  <span class="c1"># Create new mixed integer/linear model.</span>
+
+    <span class="c1"># Will take value of 1 when corresponding resistor is in use, otherwise 0.</span>
+    <span class="n">r_in_use</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">add_var</span><span class="p">(</span><span class="n">var_type</span><span class="o">=</span><span class="n">mip</span><span class="o">.</span><span class="n">BINARY</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">resistors</span><span class="p">]</span>
+    <span class="n">opt_r</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">b</span> <span class="o">*</span> <span class="n">r</span> <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">r_in_use</span><span class="p">,</span> <span class="n">resistors</span><span class="p">)])</span>  <span class="c1"># Optimal resistance</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="n">opt_r</span> <span class="o">-</span> <span class="n">target</span>  <span class="c1"># Want to minimise the absolute value of this error.</span>
+
+    <span class="c1"># create a variable which is greater than than the absolute value of the error.</span>
+    <span class="c1"># Because we will be minimizing, this will be forced down to equal the</span>
+    <span class="c1"># absolute value. Common trick, google &quot;linear programming absolute value&quot;.</span>
+    <span class="n">abs_error</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">add_var</span><span class="p">(</span><span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">+=</span> <span class="n">abs_error</span> <span class="o">&gt;=</span> <span class="n">error</span>
+    <span class="n">m</span> <span class="o">+=</span> <span class="n">abs_error</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">error</span>
+
+    <span class="c1"># Objective of the optimisation is to minimise the absolute error.</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="n">mip</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">abs_error</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># Turn off verbose logging output.</span>
+    <span class="n">sol_status</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">optimize</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">sol_status</span> <span class="o">==</span> <span class="n">mip</span><span class="o">.</span><span class="n">OptimizationStatus</span><span class="o">.</span><span class="n">OPTIMAL</span>
+
+    <span class="c1"># Get the solution values telling us which resistors are in use.</span>
+    <span class="n">r_in_use_sol</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">r_in_use</span><span class="p">]</span>
+
+    <span class="c1"># Pick out the values of the resistors corresponding to the resistors</span>
+    <span class="c1"># that the optimiser decided to use.</span>
+    <span class="n">r_to_use</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">resistors</span><span class="p">,</span> <span class="n">r_in_use_sol</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">solved_resistance</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">r_to_use</span><span class="p">)</span>
+    <span class="n">solved_error</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">solved_resistance</span> <span class="o">-</span> <span class="n">target</span><span class="p">)</span> <span class="o">/</span> <span class="n">target</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Resistors </span><span class="si">{</span><span class="n">r_to_use</span><span class="si">}</span><span class="s1"> in series &#39;</span>
+          <span class="sa">f</span><span class="s1">&#39;will produce R=</span><span class="si">{</span><span class="n">solved_resistance</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">. Aiming for R=</span><span class="si">{</span><span class="n">target</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">, &#39;</span>
+          <span class="sa">f</span><span class="s1">&#39;error of </span><span class="si">{</span><span class="n">solved_error</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">%&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">r_to_use</span>
+
+
+<span class="n">sol</span> <span class="o">=</span> <span class="n">equivalent_series</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="mi">11</span><span class="p">)</span>
+<span class="n">sol</span> <span class="o">=</span> <span class="n">equivalent_series</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="mf">15.6</span><span class="p">)</span>
+<span class="n">sol</span> <span class="o">=</span> <span class="n">equivalent_series</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)),</span> <span class="mi">1056</span><span class="p">)</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span>Resistors [1, 2, 3, 5] in series will produce R=11.000. Aiming for R=11.000, error of 0.00%
+Resistors [1, 2, 3, 4, 6] in series will produce R=16.000. Aiming for R=15.600, error of 2.56%
+Resistors [1, 7, 8, 13, 16, 19, 21, 23, 24, 25, 26, 28, 30, 31, 32, 34, 35, 43, 44, 45, 55, 60, 62, 66, 73, 74, 76, 85] in series will produce R=1056.000. Aiming for R=1056.000, error of 0.00%
+</pre></div>
+
+
+<h3>Extending to work with in parallel</h3>
+<p>To make this work with parallel resistors requires only a small change.
+I simply change the target and the individual resistor values to be
+their reciprocals.</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mip</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+
+
+<span class="k">def</span> <span class="nf">equivalent</span><span class="p">(</span><span class="n">resistors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">target</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">series</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Return list of resistors which in series/parallel are closest to target resistance.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        resistors: float values of the resistors to choose from. A resistor</span>
+<span class="sd">            value can be used as many times as it occurs in this list.</span>
+<span class="sd">        target: The target resistance.</span>
+<span class="sd">        series: True for series, false for parallel.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Optimal resistor values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<span class="hll">    <span class="n">_target</span> <span class="o">=</span> <span class="n">target</span> <span class="k">if</span> <span class="n">series</span> <span class="k">else</span> <span class="mi">1</span><span class="o">/</span><span class="n">target</span>
+</span><span class="hll">    <span class="n">_resistors</span> <span class="o">=</span> <span class="n">resistors</span> <span class="k">if</span> <span class="n">series</span> <span class="k">else</span> <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">resistors</span><span class="p">]</span>
+</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">mip</span><span class="o">.</span><span class="n">Model</span><span class="p">()</span>  <span class="c1"># Create new mixed integer/linear model.</span>
+
+    <span class="c1"># Will take value of 1 when corresponding resistor is in use, otherwise 0.</span>
+    <span class="n">r_in_use</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">add_var</span><span class="p">(</span><span class="n">var_type</span><span class="o">=</span><span class="n">mip</span><span class="o">.</span><span class="n">BINARY</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">_resistors</span><span class="p">]</span>
+    <span class="n">opt_r</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">b</span> <span class="o">*</span> <span class="n">r</span> <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">r_in_use</span><span class="p">,</span> <span class="n">_resistors</span><span class="p">)])</span>  <span class="c1"># Optimal resistance</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="n">opt_r</span> <span class="o">-</span> <span class="n">_target</span>  <span class="c1"># Want to minimise the absolute value of this error.</span>
+
+    <span class="c1"># create a variable which is greater than than the absolute value of the error.</span>
+    <span class="c1"># Because we will be minimizing, this will be forced down to equal the</span>
+    <span class="c1"># absolute value. Common trick, google &quot;linear programming absolute value&quot;.</span>
+    <span class="n">abs_error</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">add_var</span><span class="p">(</span><span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">+=</span> <span class="n">abs_error</span> <span class="o">&gt;=</span> <span class="n">error</span>
+    <span class="n">m</span> <span class="o">+=</span> <span class="n">abs_error</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">error</span>
+
+    <span class="c1"># Objective of the optimisation is to minimise the absolute error.</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="n">mip</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">abs_error</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># Turn off verbose logging output.</span>
+    <span class="n">sol_status</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">optimize</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">sol_status</span> <span class="o">==</span> <span class="n">mip</span><span class="o">.</span><span class="n">OptimizationStatus</span><span class="o">.</span><span class="n">OPTIMAL</span>
+
+    <span class="c1"># Get the solution values telling us which resistors are in use.</span>
+    <span class="n">r_in_use_sol</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">r_in_use</span><span class="p">]</span>
+
+    <span class="c1"># Pick out the values of the resistors corresponding to the resistors</span>
+    <span class="c1"># that the optimiser decided to use.</span>
+    <span class="n">r_to_use</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">resistors</span><span class="p">,</span> <span class="n">r_in_use_sol</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+
+<span class="hll">    <span class="n">solved_resistance</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">r_to_use</span><span class="p">)</span> <span class="k">if</span> <span class="n">series</span> \
+</span><span class="hll">        <span class="k">else</span> <span class="mi">1</span><span class="o">/</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">r_to_use</span><span class="p">)</span>
+</span>    <span class="n">solved_error</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">solved_resistance</span> <span class="o">-</span> <span class="n">target</span><span class="p">)</span> <span class="o">/</span> <span class="n">target</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Resistors </span><span class="si">{</span><span class="n">r_to_use</span><span class="si">}</span><span class="s1"> in </span><span class="si">{</span><span class="s2">&quot;series&quot;</span> <span class="k">if</span> <span class="n">series</span> <span class="k">else</span> <span class="s2">&quot;parallel&quot;</span><span class="si">}</span><span class="s1"> &#39;</span>
+          <span class="sa">f</span><span class="s1">&#39;will produce R=</span><span class="si">{</span><span class="n">solved_resistance</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">. Aiming for R=</span><span class="si">{</span><span class="n">target</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">, &#39;</span>
+          <span class="sa">f</span><span class="s1">&#39;error of </span><span class="si">{</span><span class="n">solved_error</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">%&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">r_to_use</span>
+
+
+<span class="n">sol</span> <span class="o">=</span> <span class="n">equivalent</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="mi">11</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+<span class="n">sol</span> <span class="o">=</span> <span class="n">equivalent</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="mf">15.6</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+<span class="n">sol</span> <span class="o">=</span> <span class="n">equivalent</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)),</span> <span class="mi">1056</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+<span class="n">sol</span> <span class="o">=</span> <span class="n">equivalent</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="mf">1.5555</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+<span class="n">sol</span> <span class="o">=</span> <span class="n">equivalent</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="mf">1.9</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+<span class="n">sol</span> <span class="o">=</span> <span class="n">equivalent</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)),</span> <span class="mi">123</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span>Resistors [1, 2, 3, 5] in series will produce R=11.000. Aiming for R=11.000, error of 0.00%
+Resistors [1, 2, 3, 4, 6] in series will produce R=16.000. Aiming for R=15.600, error of 2.56%
+Resistors [1, 7, 8, 13, 16, 19, 21, 23, 24, 25, 26, 28, 30, 31, 32, 34, 35, 43, 44, 45, 55, 60, 62, 66, 73, 74, 76, 85] in series will produce R=1056.000. Aiming for R=1056.000, error of 0.00%
+Resistors [2, 7] in parallel will produce R=1.556. Aiming for R=1.556, error of 0.00%
+Resistors [3, 5] in parallel will produce R=1.875. Aiming for R=1.900, error of -1.32%
+Resistors [99] in parallel will produce R=99.000. Aiming for R=123.000, error of -19.51%
+</pre></div>
+
+
+<h3>Picking the least number of resistors to satisfy a tolerance</h3>
+<p>Minimising the error is all well and good, but in reality you probably
+want to pick the least number of resistors to satisfy some tolerance.
+(It also turns out this is the question that the person on stack overflow meant
+to ask).</p>
+<p>To do this I simply constrain the error to be within some lower and upper
+bound, and then minimise the sum of <span class="math">\( \text{r_in_use}\)</span> (each in-use resistor
+is indicated by a value of 1, so this minimises number of resistors).</p>
+<p>Currently, if there are multiple solutions which are both within the tolerance
+and have the same number of resistors then it will arbitrarily pick one as the
+solution with no regard for which is better. You could add a small term (&lt;1.0)
+to the objective to incorporate the error.</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mip</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+
+
+<span class="k">def</span> <span class="nf">equivalent_tol</span><span class="p">(</span>
+        <span class="n">resistors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">target</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">series</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Return list of resistors which in series/parallel are within tolerance</span>
+<span class="sd">     of the target resistance, minimising the number of resistors in use.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        resistors: float values of the resistors to choose from. A resistor</span>
+<span class="sd">            value can be used as many times as it occurs in this list.</span>
+<span class="sd">        target: The target resistance.</span>
+<span class="sd">        series: True for series, false for parallel.</span>
+<span class="sd">        tol: Solved resistance will be in range [(1-tol)*target, (1+tol)*target]</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Optimal resistor values, or empty list if no solution.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_target</span> <span class="o">=</span> <span class="n">target</span> <span class="k">if</span> <span class="n">series</span> <span class="k">else</span> <span class="mi">1</span><span class="o">/</span><span class="n">target</span>
+    <span class="n">_resistors</span> <span class="o">=</span> <span class="n">resistors</span> <span class="k">if</span> <span class="n">series</span> <span class="k">else</span> <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">resistors</span><span class="p">]</span>
+    <span class="n">lower</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">tol</span><span class="p">)</span> <span class="o">*</span> <span class="n">target</span> <span class="k">if</span> <span class="n">series</span> <span class="k">else</span> <span class="mi">1</span><span class="o">/</span><span class="p">((</span><span class="mi">1</span><span class="o">+</span><span class="n">tol</span><span class="p">)</span> <span class="o">*</span> <span class="n">target</span><span class="p">)</span>
+    <span class="n">upper</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">tol</span><span class="p">)</span> <span class="o">*</span> <span class="n">target</span> <span class="k">if</span> <span class="n">series</span> <span class="k">else</span> <span class="mi">1</span><span class="o">/</span><span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">tol</span><span class="p">)</span> <span class="o">*</span> <span class="n">target</span><span class="p">)</span>
+
+    <span class="n">m</span> <span class="o">=</span> <span class="n">mip</span><span class="o">.</span><span class="n">Model</span><span class="p">()</span>  <span class="c1"># Create new mixed integer/linear model.</span>
+
+    <span class="c1"># Will take value of 1 when corresponding resistor is in use, otherwise 0.</span>
+    <span class="n">r_in_use</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">add_var</span><span class="p">(</span><span class="n">var_type</span><span class="o">=</span><span class="n">mip</span><span class="o">.</span><span class="n">BINARY</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">_resistors</span><span class="p">]</span>
+    <span class="n">opt_r</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">b</span> <span class="o">*</span> <span class="n">r</span> <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">r_in_use</span><span class="p">,</span> <span class="n">_resistors</span><span class="p">)])</span>  <span class="c1"># Optimal resistance</span>
+<span class="hll">    <span class="n">m</span> <span class="o">+=</span> <span class="n">opt_r</span> <span class="o">&gt;=</span> <span class="n">lower</span>
+</span><span class="hll">    <span class="n">m</span> <span class="o">+=</span> <span class="n">opt_r</span> <span class="o">&lt;=</span> <span class="n">upper</span>
+</span>
+    <span class="c1"># Objective of the optimisation is to minimise the number of resistors.</span>
+<span class="hll">    <span class="n">m</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="n">mip</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">mip</span><span class="o">.</span><span class="n">xsum</span><span class="p">(</span><span class="n">r_in_use</span><span class="p">))</span>
+</span>    <span class="n">m</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># Turn off verbose logging output.</span>
+    <span class="n">sol_status</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">optimize</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">sol_status</span> <span class="o">!=</span> <span class="n">mip</span><span class="o">.</span><span class="n">OptimizationStatus</span><span class="o">.</span><span class="n">OPTIMAL</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;No solution found&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="c1"># Get the solution values telling us which resistors are in use.</span>
+    <span class="n">r_in_use_sol</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">r_in_use</span><span class="p">]</span>
+
+    <span class="c1"># Pick out the values of the resistors corresponding to the resistors</span>
+    <span class="c1"># that the optimiser decided to use.</span>
+    <span class="n">r_to_use</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">resistors</span><span class="p">,</span> <span class="n">r_in_use_sol</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">solved_resistance</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">r_to_use</span><span class="p">)</span> <span class="k">if</span> <span class="n">series</span> \
+        <span class="k">else</span> <span class="mi">1</span><span class="o">/</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">r_to_use</span><span class="p">)</span>
+    <span class="n">solved_error</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">solved_resistance</span> <span class="o">-</span> <span class="n">target</span><span class="p">)</span> <span class="o">/</span> <span class="n">target</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Resistors </span><span class="si">{</span><span class="n">r_to_use</span><span class="si">}</span><span class="s1"> in </span><span class="si">{</span><span class="s2">&quot;series&quot;</span> <span class="k">if</span> <span class="n">series</span> <span class="k">else</span> <span class="s2">&quot;parallel&quot;</span><span class="si">}</span><span class="s1"> &#39;</span>
+          <span class="sa">f</span><span class="s1">&#39;will produce R=</span><span class="si">{</span><span class="n">solved_resistance</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">. Aiming for R=</span><span class="si">{</span><span class="n">target</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">, &#39;</span>
+          <span class="sa">f</span><span class="s1">&#39;error of </span><span class="si">{</span><span class="n">solved_error</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">%&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">r_to_use</span>
+
+
+<span class="n">sol</span> <span class="o">=</span> <span class="n">equivalent_tol</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="mi">11</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+<span class="n">sol</span> <span class="o">=</span> <span class="n">equivalent_tol</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="mf">15.6</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+<span class="n">sol</span> <span class="o">=</span> <span class="n">equivalent_tol</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)),</span> <span class="mi">1056</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+
+<span class="n">sol</span> <span class="o">=</span> <span class="n">equivalent_tol</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="mf">1.5555</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+<span class="n">sol</span> <span class="o">=</span> <span class="n">equivalent_tol</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="mf">1.9</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+<span class="n">sol</span> <span class="o">=</span> <span class="n">equivalent_tol</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)),</span> <span class="mi">123</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span>Resistors [5, 6] in series will produce R=11.000. Aiming for R=11.000, error of 0.00%
+Resistors [4, 5, 6] in series will produce R=15.000. Aiming for R=15.600, error of -3.85%
+Resistors [89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99] in series will produce R=1034.000. Aiming for R=1056.000, error of -2.08%
+Resistors [2, 5] in parallel will produce R=1.429. Aiming for R=1.556, error of -8.16%
+Resistors [2] in parallel will produce R=2.000. Aiming for R=1.900, error of 5.26%
+No solution found
+</pre></div>
+
+
+<h3>Stress Testing</h3>
+<p>How many possible resistor values can I feed it, and how long will it take to solve?
+The following, with ten thousand resistors, runs in about one second on my computer.</p>
+<div class="highlight"><pre><span></span><span class="n">sol</span> <span class="o">=</span> <span class="n">equivalent</span><span class="p">([</span><span class="n">x</span><span class="o">/</span><span class="mi">100</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">)],</span> <span class="mf">5.26591</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span>Resistors [28.59, 61.6, 88.54, 89.88, 92.31, 92.75, 93.11, 93.12, 93.6, 94.08, 94.25, 94.45, 95.69, 98.61, 98.74] in parallel will produce R=5.264. Aiming for R=5.266, error of -0.03%
+</pre></div>
+
+
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/latest.js?config=TeX-AMS-MML_HTMLorMML';
+
+    var configscript = document.createElement('script');
+    configscript.type = 'text/x-mathjax-config';
+    configscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'none' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        availableFonts: ['STIX', 'TeX']," +
+        "        preferredFont: 'STIX'," +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(configscript);
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
+            </div>
+            <!-- /.entry-content -->
+    <hr/>
+    <section class="comments" id="comments">
+        <h2>Comments</h2>
+
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'jurasofish-github-io'; // required: replace example with your forum shortname
+
+            var disqus_config = function () {
+                this.language = "english";
+
+                        this.page.identifier = '2021-02-07-picking-resistors-for-parallel-and-series-equivalence';
+                        this.page.url = 'https://jurasofish.github.io/picking-resistors-for-parallel-and-series-equivalence.html';
+            };
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function () {
+                var dsq = document.createElement('script');
+                dsq.type = 'text/javascript';
+                dsq.async = true;
+                dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by
+            Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </section>
+        </article>
+    </section>
+
+        </div>
+    </div>
+</div>
+<!-- End Content Container -->
+
+<footer>
+   <div class="container">
+      <div class="row">
+         <div class="col-md-8 col-md-offset-2">
+            <hr>
+            &copy; 2021 Michael Jurasovic
+            &nbsp; &middot; &nbsp; Powered by <a href="https://github.com/getpelican/pelican-themes/tree/master/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>
+            &nbsp; &middot; &nbsp; <a href="feeds/all.atom.xml" target="_blank">RSS</a>
+<!--            <span style="float: right"><a href="feeds/all.atom.xml" target="_blank">RSS</a></span>-->            <br><br>
+         </div>
+      </div>
+   </div>
+</footer>
+<script src="https://jurasofish.github.io/theme/js/jquery.min.js"></script>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="https://jurasofish.github.io/theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="https://jurasofish.github.io/theme/js/respond.min.js"></script>
+
+
+    <!-- Disqus -->
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'jurasofish-github-io'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function () {
+            var s = document.createElement('script');
+            s.async = true;
+            s.type = 'text/javascript';
+            s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+            (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+        }());
+    </script>
+    <!-- End Disqus Code -->
+    <!-- Google Analytics -->
+    <script type="text/javascript">
+
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-176828922-1']);
+        _gaq.push(['_trackPageview']);
+
+        (function () {
+            var ga = document.createElement('script');
+            ga.type = 'text/javascript';
+            ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(ga, s);
+        })();
+    </script>
+    <!-- End Google Analytics Code -->
+
+
+</body>
+</html>
