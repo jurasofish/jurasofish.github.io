@@ -1,5 +1,5 @@
 AUTHOR = 'Michael Jurasovic'
-SITENAME = 'Michael Jurasovic'
+SITENAME = "Michael Jurasovic's Weblog"
 SITEURL = "https://jurasofish.github.io"
 
 PATH = "content"
