@@ -1,6 +1,6 @@
 AUTHOR = 'Michael Jurasovic'
 SITENAME = 'Michael Jurasovic'
-SITEURL = ""
+SITEURL = "https://jurasofish.github.io"
 
 PATH = "content"
 
@@ -9,7 +9,7 @@ TIMEZONE = 'Australia/Melbourne'
 DEFAULT_LANG = 'en'
 
 # Feed generation is usually not desired when developing
-FEED_ALL_ATOM = None
+FEED_ALL_ATOM = 'feeds/all.atom.xml'
 CATEGORY_FEED_ATOM = None
 TRANSLATION_FEED_ATOM = None
 AUTHOR_FEED_ATOM = None
@@ -17,19 +17,43 @@ AUTHOR_FEED_RSS = None
 
 # Blogroll
 LINKS = (
-    ("Pelican", "https://getpelican.com/"),
-    ("Python.org", "https://www.python.org/"),
-    ("Jinja2", "https://palletsprojects.com/p/jinja/"),
-    ("You can modify those links in your config file", "#"),
+    ('Github', 'https://github.com/jurasofish'),
 )
 
 # Social widget
 SOCIAL = (
-    ("You can add links in your config file", "#"),
-    ("Another social link", "#"),
+    ('Github', 'https://github.com/jurasofish'),
+)
+
+MENUITEMS = (
+    ('GitHub', 'https://github.com/jurasofish'),
 )
 
 DEFAULT_PAGINATION = False
 
 # Uncomment following line if you want document-relative URLs when developing
-# RELATIVE_URLS = True
+#RELATIVE_URLS = True
+
+PLUGIN_PATHS = ["plugins"]
+PLUGINS = [
+    'pelican.plugins.render_math',
+    'i18n_subsites',
+]
+
+THEME = 'themes/pelican-bootstrap3'
+
+JINJA_ENVIRONMENT = {'extensions': ['jinja2.ext.i18n']}
+
+# BOOTSTRAP_THEME = 'flatly'
+BOOTSTRAP_THEME = 'yeti'
+PYGMENTS_STYLE = 'autumn'
+CUSTOM_CSS = 'static/css/custom.css'
+STATIC_PATHS = [
+    'images',
+    'extra',
+]
+EXTRA_PATH_METADATA = {'extra/custom.css': {'path': 'static/css/custom.css'}}
+HIDE_SIDEBAR = True
+PADDED_SINGLE_COLUMN_STYLE = True
+DISPLAY_CATEGORIES_ON_MENU = False
+RELATIVE_URLS = True
