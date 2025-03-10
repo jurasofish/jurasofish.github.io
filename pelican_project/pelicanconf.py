@@ -46,7 +46,7 @@ JINJA_ENVIRONMENT = {'extensions': ['jinja2.ext.i18n']}
 
 # BOOTSTRAP_THEME = 'flatly'
 BOOTSTRAP_THEME = 'yeti'
-PYGMENTS_STYLE = 'autumn'
+PYGMENTS_STYLE = 'xcode'
 CUSTOM_CSS = 'static/css/custom.css'
 STATIC_PATHS = [
     'extra',

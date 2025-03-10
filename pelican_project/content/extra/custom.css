@@ -1,3 +1,9 @@
 .entry-content {
     text-align: justify;
 }
+
+/* Code blocks */
+.highlight pre {
+    background-color: #fAfAfA;
+    border: 0
+}
