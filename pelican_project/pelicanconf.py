@@ -49,7 +49,6 @@ BOOTSTRAP_THEME = 'yeti'
 PYGMENTS_STYLE = 'autumn'
 CUSTOM_CSS = 'static/css/custom.css'
 STATIC_PATHS = [
-    'images',
     'extra',
 ]
 EXTRA_PATH_METADATA = {'extra/custom.css': {'path': 'static/css/custom.css'}}
