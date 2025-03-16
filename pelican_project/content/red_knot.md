@@ -195,6 +195,8 @@ Enabling / disabling rules:
 
 Let's go!
 
+I'm going to crown this workflow "vibe grokking". Cheers. 
+
 ## Using
 
 Let's start by running Red Knot on my own [MCPunk](https://github.com/jurasofish/mcpunk) codebase
