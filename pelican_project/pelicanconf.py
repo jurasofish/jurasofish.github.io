@@ -49,9 +49,9 @@ BOOTSTRAP_THEME = 'yeti'
 PYGMENTS_STYLE = 'xcode'
 CUSTOM_CSS = 'static/css/custom.css'
 STATIC_PATHS = [
-    'extra',
+    'static',
 ]
-EXTRA_PATH_METADATA = {'extra/custom.css': {'path': 'static/css/custom.css'}}
+EXTRA_PATH_METADATA = {'static/custom.css': {'path': 'static/css/custom.css'}}
 HIDE_SIDEBAR = True
 PADDED_SINGLE_COLUMN_STYLE = True
 DISPLAY_CATEGORIES_ON_MENU = False
