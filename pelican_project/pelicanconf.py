@@ -51,6 +51,9 @@ CUSTOM_CSS = 'static/css/custom.css'
 STATIC_PATHS = [
     'static',
 ]
+ARTICLE_EXCLUDES = [
+    "static",  # Don't treat files in static as articles
+]
 EXTRA_PATH_METADATA = {'static/custom.css': {'path': 'static/css/custom.css'}}
 HIDE_SIDEBAR = True
 PADDED_SINGLE_COLUMN_STYLE = True
